@@ -69,12 +69,12 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 
 **Dynamic Model Selection (opt-in):**
 ```env
-# Default (unset): stable upstream auto-selection + alias targets.
-# Enabled: auto-mode prefers the newest flagships; bare aliases (flash/pro/flash-lite) remap to newest.
+# Default (unset): upstream auto-selection algorithm + upstream alias targets.
+# Enabled: OpenAI auto-mode prefers the newest flagships; bare aliases (flash/pro/flash-lite) remap to newest.
 DYNAMIC_MODEL_SELECTION=1
 ```
 
-With `DYNAMIC_MODEL_SELECTION` unset, auto-mode uses the established per-category preference lists and bare aliases keep their stable targets (e.g. `flash`→`gemini-2.5-flash`, `pro`→`gemini-3-pro-preview`). Enabling it opts into the newest models (e.g. `flash`→`gemini-3.5-flash`, `pro`→`gemini-3.1-pro-preview`, and OpenAI auto-selection leading with the newest flagship). **Caveat:** when enabled, auto-mode may pick a newer model your API key cannot access yet — selection falls back only on restriction policy, not on an API model-not-found at call time. Pair it with `*_ALLOWED_MODELS` / `*_DISALLOWED_MODELS` to constrain the pool.
+With `DYNAMIC_MODEL_SELECTION` unset, auto-mode uses upstream's selection *algorithm* and bare aliases keep their upstream targets (`flash`→`gemini-2.5-flash`, `pro`→`gemini-3-pro-preview`). For OpenAI this means the established per-category preference lists, unchanged. For Gemini, upstream selection is reverse-alphabetical over the available models, so the newest-numbered model in the catalogue is naturally selected — adding newer Gemini models (`gemini-3.5-flash`, `gemini-3.1-pro-preview`) advances the default Gemini auto-pick accordingly, exactly as upstream's own algorithm would when models are added. Enabling the flag additionally makes OpenAI auto-selection lead with the newest flagship and remaps the bare aliases to the newest models (`flash`→`gemini-3.5-flash`, `pro`→`gemini-3.1-pro-preview`). **Caveat:** with the flag on (and, for Gemini, by default once newer models are in the catalogue), auto-mode may pick a newer model your API key cannot access yet — selection falls back only on restriction policy, not on an API model-not-found at call time. Pair it with `*_ALLOWED_MODELS` / `*_DISALLOWED_MODELS` to constrain the pool.
 
 - **Available Models:** The canonical capability data for native providers lives in JSON manifests under `conf/`:
   - `conf/openai_models.json` – OpenAI catalogue (can be overridden with `OPENAI_MODELS_CONFIG_PATH`)

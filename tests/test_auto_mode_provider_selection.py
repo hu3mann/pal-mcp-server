@@ -58,7 +58,10 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            # Should select appropriate Gemini models
+            # Should select appropriate Gemini models. NOTE: with DYNAMIC_MODEL_SELECTION unset, Gemini
+            # selection still uses upstream's reverse-alphabetical algorithm; it is pool-driven, so the
+            # newest-numbered model in the catalogue wins by default (gemini-3.5-flash, gemini-3.1-pro-preview)
+            # the same way upstream's algorithm advances whenever newer models are added.
             assert extended_reasoning in ["gemini-3.1-pro-preview", "gemini-3-pro-preview", "gemini-2.5-pro", "pro"]
             assert fast_response in ["gemini-3.5-flash", "flash"]
             assert balanced in ["gemini-3.5-flash", "flash"]
