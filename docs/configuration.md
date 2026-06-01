@@ -67,6 +67,15 @@ CUSTOM_MODEL_NAME=llama3.2                          # Default model
 DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 ```
 
+**Dynamic Model Selection (opt-in):**
+```env
+# Default (unset): stable upstream auto-selection + alias targets.
+# Enabled: auto-mode prefers the newest flagships; bare aliases (flash/pro/flash-lite) remap to newest.
+DYNAMIC_MODEL_SELECTION=1
+```
+
+With `DYNAMIC_MODEL_SELECTION` unset, auto-mode uses the established per-category preference lists and bare aliases keep their stable targets (e.g. `flash`→`gemini-2.5-flash`, `pro`→`gemini-3-pro-preview`). Enabling it opts into the newest models (e.g. `flash`→`gemini-3.5-flash`, `pro`→`gemini-3.1-pro-preview`, and OpenAI auto-selection leading with the newest flagship). **Caveat:** when enabled, auto-mode may pick a newer model your API key cannot access yet — selection falls back only on restriction policy, not on an API model-not-found at call time. Pair it with `*_ALLOWED_MODELS` / `*_DISALLOWED_MODELS` to constrain the pool.
+
 - **Available Models:** The canonical capability data for native providers lives in JSON manifests under `conf/`:
   - `conf/openai_models.json` – OpenAI catalogue (can be overridden with `OPENAI_MODELS_CONFIG_PATH`)
   - `conf/gemini_models.json` – Gemini catalogue (`GEMINI_MODELS_CONFIG_PATH`)
@@ -183,6 +192,14 @@ XAI_ALLOWED_MODELS=grok-4,grok-4.1-fast-reasoning
 
 # OpenRouter model restrictions (affects models via custom provider)
 OPENROUTER_ALLOWED_MODELS=opus,sonnet,mistral
+```
+
+**Block-lists (`*_DISALLOWED_MODELS`):** the complement of the allow-lists — reject specific models while leaving the provider otherwise open. A block-list match always wins, so a model is usable iff it is **not** blocked **and** (no allow-list is set **or** it is on the allow-list). Use this to exclude a few models (e.g. costly `*-pro` tiers) without enumerating every model you want to keep. Available for `OPENAI_`, `GOOGLE_`, `XAI_`, `OPENROUTER_`, and `DIAL_`.
+
+```env
+# Block specific models; everything else stays available
+OPENAI_DISALLOWED_MODELS=gpt-5.5-pro
+OPENROUTER_DISALLOWED_MODELS=openai/gpt-5.5-pro,openai/gpt-5.4-pro
 ```
 
 **Supported Model Names:** The names/aliases listed in the JSON manifests above are the authoritative source. Keep in mind:
