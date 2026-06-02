@@ -9,7 +9,7 @@
       "aliases": "Array of short names users can type instead of the full model name",
       "context_window": "Total number of tokens the model can process (input + output combined)",
       "max_output_tokens": "Maximum number of tokens the model can generate in a single response",
-      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (currently none do via OpenRouter or custom APIs)",
+      "supports_extended_thinking": "Whether the model supports extended reasoning tokens (set from the provider's advertised reasoning support)",
       "supports_json_mode": "Whether the model can guarantee valid JSON output",
       "supports_function_calling": "Whether the model supports function/tool calling",
       "supports_images": "Whether the model can process images/visual input",
@@ -639,7 +639,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "DeepSeek V4 Flash via OpenRouter - fast, low-cost reasoning (1M context).",
-      "intelligence_score": 13
+      "intelligence_score": 14
     },
     {
       "model_name": "qwen/qwen3.7-max",
@@ -656,7 +656,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "Alibaba Qwen3.7 Max via OpenRouter - flagship (1M context).",
-      "intelligence_score": 15
+      "intelligence_score": 16
     },
     {
       "model_name": "qwen/qwen3.6-flash",
@@ -672,7 +672,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Alibaba Qwen3.6 Flash via OpenRouter - fast multimodal, low-cost.",
-      "intelligence_score": 12
+      "intelligence_score": 13
     },
     {
       "model_name": "moonshotai/kimi-k2.6",
@@ -689,7 +689,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Moonshot Kimi K2.6 via OpenRouter - flagship agentic multimodal model.",
-      "intelligence_score": 15
+      "intelligence_score": 16
     },
     {
       "model_name": "moonshotai/kimi-k2.5",
@@ -721,7 +721,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "Zhipu GLM-5.1 via OpenRouter - flagship reasoning model.",
-      "intelligence_score": 15
+      "intelligence_score": 16
     },
     {
       "model_name": "z-ai/glm-4.7-flash",
@@ -737,7 +737,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "Zhipu GLM-4.7 Flash via OpenRouter - fast, very low-cost reasoning.",
-      "intelligence_score": 11
+      "intelligence_score": 12
     },
     {
       "model_name": "minimax/minimax-m3",
@@ -745,7 +745,7 @@
         "minimax",
         "minimax-m3"
       ],
-      "context_window": 1048576,
+      "context_window": 524288,
       "max_output_tokens": 512000,
       "supports_extended_thinking": true,
       "supports_json_mode": true,
@@ -753,7 +753,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "MiniMax M3 via OpenRouter - flagship multimodal reasoning (1M context).",
-      "intelligence_score": 14
+      "intelligence_score": 15
     },
     {
       "model_name": "minimax/minimax-m2.5",
@@ -768,7 +768,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "MiniMax M2.5 via OpenRouter - lower-cost tier.",
-      "intelligence_score": 12
+      "intelligence_score": 13
     },
     {
       "model_name": "google/gemma-4-31b-it",
@@ -817,7 +817,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Mistral Large 3 (2512) via OpenRouter - flagship (multimodal).",
-      "intelligence_score": 13
+      "intelligence_score": 12
     },
     {
       "model_name": "mistralai/mistral-small-2603",
@@ -850,7 +850,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "Xiaomi MiMo v2.5 Pro via OpenRouter - flagship reasoning (1M context).",
-      "intelligence_score": 13
+      "intelligence_score": 15
     },
     {
       "model_name": "xiaomi/mimo-v2.5",
@@ -865,7 +865,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Xiaomi MiMo v2.5 via OpenRouter - low-cost multimodal reasoning.",
-      "intelligence_score": 11
+      "intelligence_score": 13
     },
     {
       "model_name": "openai/gpt-oss-120b",
@@ -881,7 +881,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "OpenAI gpt-oss-120b via OpenRouter - open-weight flagship (reasoning).",
-      "intelligence_score": 14
+      "intelligence_score": 13
     },
     {
       "model_name": "openai/gpt-oss-20b",
@@ -913,14 +913,14 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Meta Llama 4 Maverick via OpenRouter - flagship MoE (multimodal).",
-      "intelligence_score": 13
+      "intelligence_score": 12
     },
     {
       "model_name": "meta-llama/llama-4-scout",
       "aliases": [
         "llama4-scout"
       ],
-      "context_window": 10000000,
+      "context_window": 327680,
       "max_output_tokens": 16384,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
@@ -928,7 +928,7 @@
       "supports_images": true,
       "max_image_size_mb": 20.0,
       "description": "Meta Llama 4 Scout via OpenRouter - efficient long-context (multimodal).",
-      "intelligence_score": 11
+      "intelligence_score": 10
     },
     {
       "model_name": "nvidia/nemotron-3-super-120b-a12b",
@@ -936,7 +936,7 @@
         "nemotron",
         "nemotron-super"
       ],
-      "context_window": 1000000,
+      "context_window": 262144,
       "max_output_tokens": 32768,
       "supports_extended_thinking": true,
       "supports_json_mode": true,
@@ -944,7 +944,7 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "description": "NVIDIA Nemotron-3 Super 120B via OpenRouter - flagship reasoning.",
-      "intelligence_score": 13
+      "intelligence_score": 12
     },
     {
       "model_name": "nvidia/nemotron-3-nano-30b-a3b",
