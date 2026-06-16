@@ -1,0 +1,13 @@
+{
+  "pal": {
+    "type": "stdio",
+    "command": "docker",
+    "args": [
+      "exec",
+      "-i",
+      "pal-mcp-server",
+      "/opt/venv/bin/python",
+      "server.py"
+    ]
+  }
+}

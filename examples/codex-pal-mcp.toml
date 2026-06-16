@@ -1,0 +1,10 @@
+# Snippet for ~/.codex/config.toml
+[mcp_servers.pal]
+command = "docker"
+args = ["exec", "-i", "pal-mcp-server", "/opt/venv/bin/python", "server.py"]
+required = true
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.pal.env]
+PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
