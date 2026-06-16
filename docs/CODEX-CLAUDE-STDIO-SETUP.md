@@ -113,6 +113,16 @@ The Dopemux monorepo also defines `mcp-pal` (HTTP, port 3003) and `mcp-pal-stdio
 That stack is **separate** from this standalone `~/code/pal-mcp-server` checkout.
 Codex config in this setup targets **`pal-mcp-server`** from this repo's `docker compose`.
 
+## Example config files (in repo)
+
+- `examples/codex-pal-mcp.toml` — paste into `~/.codex/config.toml`
+- `examples/claude-pal-mcp.json` — paste into `~/.claude.json` → `mcpServers`
+
+## Related repos
+
+- Operator fork (canonical): [hu3mann/pal-mcp-server](https://github.com/hu3mann/pal-mcp-server)
+- Dopemux runbook: [docs/ops/pal-mcp-codex-claude-stdio.md](https://github.com/DDD-Enterprises/dopemux-mvp/blob/feat/conport-optimal-series/docs/ops/pal-mcp-codex-claude-stdio.md)
+
 ## Security
 
 - Never commit `.env` (gitignored).
