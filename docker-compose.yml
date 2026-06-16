@@ -6,7 +6,13 @@ services:
       target: runtime
     image: pal-mcp-server:latest
     container_name: pal-mcp-server
-    
+    env_file:
+      - .env
+    # Stay alive for Codex/Claude `docker exec -i ... server.py` stdio sessions
+    stdin_open: true
+    tty: true
+    command: ["sleep", "infinity"]
+
     # Container labels for traceability
     labels:
       - "com.pal-mcp.service=pal-mcp-server"
@@ -70,11 +76,11 @@ services:
     
     # Health check
     healthcheck:
-      test: ["CMD", "python", "/usr/local/bin/healthcheck.py"]
+      test: ["CMD", "python", "-c", "import mcp, openai; print('ok')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
     
     # Restart policy
     restart: unless-stopped
@@ -96,6 +102,3 @@ volumes:
 networks:
   pal-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

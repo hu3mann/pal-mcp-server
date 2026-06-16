@@ -51,18 +51,26 @@ docker run --rm -i \
   pal-mcp-server:latest
 ```
 
-#### B. Docker Compose (For Development/Monitoring)
+#### B. Docker Compose (Codex / Claude Code stdio)
+
+The compose file runs a **persistent** container (`sleep infinity`) so Codex and
+Claude Code can attach via `docker exec -i pal-mcp-server /opt/venv/bin/python server.py`.
 
 ```bash
-# Deploy with Docker Compose
+cp .env.example .env   # add at least one API key
+docker compose up -d --build
+docker ps --filter name=pal-mcp-server   # expect: Up (healthy)
+```
+
+Full client config (Codex `config.toml`, Claude `claude.json`, troubleshooting):
+see [docs/CODEX-CLAUDE-STDIO-SETUP.md](../docs/CODEX-CLAUDE-STDIO-SETUP.md).
+
+#### C. Docker Compose (legacy deploy scripts)
+
+```bash
 chmod +x docker/scripts/deploy.sh
 ./docker/scripts/deploy.sh
-
-# Or use PowerShell script
 docker/scripts/deploy.ps1
-
-# Interactive stdio mode
-docker-compose exec pal-mcp python server.py
 ```
 
 ## Service Management
@@ -106,11 +114,9 @@ docker-compose up -d pal-mcp
 
 ## Health Monitoring
 
-The container includes health checks that verify:
-- Server process is running
-- Python modules can be imported
-- Log directory is writable  
-- API keys are configured
+The compose healthcheck verifies critical Python imports (`mcp`, `openai`) inside the
+runtime image. When using `sleep infinity` for stdio clients, the main `server.py`
+process is spawned per session by `docker exec`, not as PID 1.
 
 ## Volumes and Persistent Data
 
