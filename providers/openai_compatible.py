@@ -458,12 +458,18 @@ class OpenAICompatibleProvider(ModelProvider):
             "reasoning": {"effort": effort},
         }
 
+        contains_images = any(
+            block.get("type") == "input_image" for message in input_messages for block in message["content"]
+        )
+
         # Only include store parameter for providers that support it.
         # OpenRouter's /responses endpoint rejects store:true via Zod validation (Issue #348).
         # This is an endpoint-level limitation, not model-specific, so we omit for all
         # OpenRouter /responses calls. If OpenRouter later supports store, revisit this logic.
-        if self.get_provider_type() != ProviderType.OPENROUTER:
-            completion_params["store"] = True
+        provider_type = self.get_provider_type()
+        if provider_type != ProviderType.OPENROUTER:
+            # xAI advises disabling server-side history for image requests because storage can make them fail.
+            completion_params["store"] = not (provider_type == ProviderType.XAI and contains_images)
         else:
             logging.debug(f"Omitting 'store' parameter for OpenRouter provider (model: {model_name})")
 
