@@ -312,8 +312,13 @@ class OpenAICompatibleProvider(ModelProvider):
                     if self.DEFAULT_HEADERS:
                         client_kwargs["default_headers"] = self.DEFAULT_HEADERS.copy()
 
+                    # COST CONTROL: Disable automatic retries to prevent request multiplication
+                    # OpenAI SDK 2.x has automatic retries enabled by default (2 retries)
+                    # We disable this to prevent cost spikes from retry loops
+                    client_kwargs["max_retries"] = 0
+
                     logging.debug(
-                        "OpenAI client initialized with custom httpx client and timeout: %s",
+                        "OpenAI client initialized with custom httpx client and timeout: %s (max_retries=0 for cost control)",
                         timeout_config,
                     )
 
@@ -327,7 +332,7 @@ class OpenAICompatibleProvider(ModelProvider):
                         e,
                     )
                     try:
-                        minimal_kwargs = {"api_key": self.api_key}
+                        minimal_kwargs = {"api_key": self.api_key, "max_retries": 0}
                         if self.base_url:
                             minimal_kwargs["base_url"] = self.base_url
                         self._client = OpenAI(**minimal_kwargs)
@@ -355,10 +360,7 @@ class OpenAICompatibleProvider(ModelProvider):
                     for content_item in msg.get("content", []):
                         if isinstance(content_item, dict):
                             if "text" in content_item:
-                                # Truncate long text and add ellipsis
-                                text = content_item["text"]
-                                if len(text) > 100:
-                                    content_item["text"] = text[:100] + "... [truncated]"
+                                content_item["text"] = "[redacted text]"
                             if "image_url" in content_item:
                                 content_item["image_url"] = "[redacted image]"
 
@@ -462,10 +464,6 @@ class OpenAICompatibleProvider(ModelProvider):
             block.get("type") == "input_image" for message in input_messages for block in message["content"]
         )
 
-        # Only include store parameter for providers that support it.
-        # OpenRouter's /responses endpoint rejects store:true via Zod validation (Issue #348).
-        # This is an endpoint-level limitation, not model-specific, so we omit for all
-        # OpenRouter /responses calls. If OpenRouter later supports store, revisit this logic.
         provider_type = self.get_provider_type()
         if provider_type != ProviderType.OPENROUTER:
             # xAI advises disabling server-side history for image requests because storage can make them fail.
