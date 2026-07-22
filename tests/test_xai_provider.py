@@ -167,7 +167,7 @@ class TestXAIProvider:
         result = provider.generate_content(
             prompt="Test prompt",
             model_name=alias,
-            temperature=0.7,
+            temperature=9.0,
         )
 
         call_kwargs = mock_client.responses.create.call_args.kwargs
@@ -175,6 +175,7 @@ class TestXAIProvider:
         assert call_kwargs["input"] == [{"role": "user", "content": [{"type": "input_text", "text": "Test prompt"}]}]
         assert call_kwargs["reasoning"] == {"effort": "medium"}
         assert call_kwargs["store"] is True
+        assert call_kwargs["temperature"] == 2.0
         assert result.content == "Test response"
         assert result.model_name == "grok-4.5"
 
