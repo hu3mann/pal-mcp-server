@@ -120,8 +120,20 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
         # auto-selectable when a restriction policy allows only them). The dynamic lists apply only
         # when DYNAMIC_MODEL_SELECTION is enabled, leaving default selection unchanged.
         if category == ToolModelCategory.EXTENDED_REASONING:
-            default = ["gpt-5.1-codex", "gpt-5.2", "gpt-5-codex", "gpt-5.2-pro", "o3-pro", "gpt-5", "o3"]
+            default = [
+                "gpt-5.6-sol",
+                "gpt-5.6-terra",
+                "gpt-5.1-codex",
+                "gpt-5.2",
+                "gpt-5-codex",
+                "gpt-5.2-pro",
+                "o3-pro",
+                "gpt-5",
+                "o3",
+            ]
             dynamic = [
+                "gpt-5.6-sol",
+                "gpt-5.6-terra",
                 "gpt-5.5",
                 "gpt-5.4",
                 "gpt-5.3-codex",
@@ -138,8 +150,20 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
                 "o3",
             ]
         elif category == ToolModelCategory.FAST_RESPONSE:
-            default = ["gpt-5.2", "gpt-5.1-codex-mini", "gpt-5", "gpt-5-mini", "gpt-5-codex", "o4-mini", "o3-mini"]
+            default = [
+                "gpt-5.6-luna",
+                "gpt-5.6-terra",
+                "gpt-5.2",
+                "gpt-5.1-codex-mini",
+                "gpt-5",
+                "gpt-5-mini",
+                "gpt-5-codex",
+                "o4-mini",
+                "o3-mini",
+            ]
             dynamic = [
+                "gpt-5.6-luna",
+                "gpt-5.6-terra",
                 "gpt-5.4-mini",
                 "gpt-5.4-nano",
                 "gpt-5-mini",
@@ -153,6 +177,9 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
             ]
         else:  # BALANCED or default
             default = [
+                "gpt-5.6-terra",
+                "gpt-5.6-sol",
+                "gpt-5.6-luna",
                 "gpt-5.2",
                 "gpt-5.1-codex",
                 "gpt-5",
@@ -163,6 +190,9 @@ class OpenAIModelProvider(RegistryBackedProviderMixin, OpenAICompatibleProvider)
                 "o3-mini",
             ]
             dynamic = [
+                "gpt-5.6-terra",
+                "gpt-5.6-sol",
+                "gpt-5.6-luna",
                 "gpt-5.5",
                 "gpt-5.4",
                 "gpt-5.3-codex",

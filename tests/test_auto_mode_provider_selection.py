@@ -100,10 +100,9 @@ class TestAutoModeProviderSelection:
             fast_response = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            # Should select appropriate OpenAI models based on the upstream (default) preference order
-            assert extended_reasoning == "gpt-5.1-codex"  # Upstream default reasoning preference
-            assert fast_response == "gpt-5.2"  # Upstream default fast response preference
-            assert balanced == "gpt-5.2"  # Upstream default balanced preference
+            assert extended_reasoning == "gpt-5.6-sol"
+            assert fast_response == "gpt-5.6-luna"
+            assert balanced == "gpt-5.6-terra"
 
         finally:
             # Restore original environment
@@ -327,8 +326,8 @@ class TestAutoModeProviderSelection:
                 ),  # "pro" resolves to gemini-3-pro-preview by default
                 ("mini", ProviderType.OPENAI, "gpt-5-mini"),  # "mini" resolves to gpt-5-mini
                 ("o3mini", ProviderType.OPENAI, "o3-mini"),
-                ("grok", ProviderType.XAI, "grok-4"),
-                ("grok-4.1-fast-reasoning", ProviderType.XAI, "grok-4-1-fast-reasoning"),
+                ("grok", ProviderType.XAI, "grok-4.5"),
+                ("grok-build-latest", ProviderType.XAI, "grok-4.5"),
             ]
 
             for alias, expected_provider_type, expected_resolved_name in test_cases:

@@ -68,14 +68,11 @@ class OpenAICompatibleProvider(ModelProvider):
     ) -> None:
         """Respect provider-specific allowlists before default restriction checks."""
 
-        super()._ensure_model_allowed(capabilities, canonical_name, requested_name)
-
         if self.allowed_models is not None:
             requested = requested_name.lower()
             canonical = canonical_name.lower()
 
             if requested not in self.allowed_models and canonical not in self.allowed_models:
-                allowed = False
                 for allowed_entry in list(self.allowed_models):
                     normalized_resolved = self._allowed_alias_cache.get(allowed_entry)
                     if normalized_resolved is None:
@@ -91,17 +88,29 @@ class OpenAICompatibleProvider(ModelProvider):
                         self._allowed_alias_cache[allowed_entry] = normalized_resolved
 
                     if normalized_resolved == canonical:
-                        # Canonical match discovered via alias resolution – mark as allowed and
-                        # memoise the canonical entry for future lookups.
-                        allowed = True
                         self._allowed_alias_cache[canonical] = canonical
                         self.allowed_models.add(canonical)
+                        try:
+                            from utils.model_restrictions import get_restriction_service
+
+                            restriction_service = get_restriction_service()
+                            service_allowed = restriction_service.get_allowed_models(self.get_provider_type())
+                            if service_allowed is not None:
+                                service_allowed.add(canonical)
+                        except Exception:  # pragma: no cover - local enforcement remains available
+                            pass
                         break
 
-                if not allowed:
-                    raise ValueError(
-                        f"Model '{requested_name}' is not allowed by restriction policy. Allowed models: {sorted(self.allowed_models)}"
-                    )
+        # Apply global restriction policy after alias normalization.
+        super()._ensure_model_allowed(capabilities, canonical_name, requested_name)
+
+        if self.allowed_models is not None:
+            requested = requested_name.lower()
+            canonical = canonical_name.lower()
+            if requested not in self.allowed_models and canonical not in self.allowed_models:
+                raise ValueError(
+                    f"Model '{requested_name}' is not allowed by restriction policy. Allowed models: {sorted(self.allowed_models)}"
+                )
 
     def _parse_allowed_models(self) -> Optional[set[str]]:
         """Parse allowed models from environment variable.
@@ -303,8 +312,13 @@ class OpenAICompatibleProvider(ModelProvider):
                     if self.DEFAULT_HEADERS:
                         client_kwargs["default_headers"] = self.DEFAULT_HEADERS.copy()
 
+                    # COST CONTROL: Disable automatic retries to prevent request multiplication
+                    # OpenAI SDK 2.x has automatic retries enabled by default (2 retries)
+                    # We disable this to prevent cost spikes from retry loops
+                    client_kwargs["max_retries"] = 0
+
                     logging.debug(
-                        "OpenAI client initialized with custom httpx client and timeout: %s",
+                        "OpenAI client initialized with custom httpx client and timeout: %s (max_retries=0 for cost control)",
                         timeout_config,
                     )
 
@@ -318,7 +332,7 @@ class OpenAICompatibleProvider(ModelProvider):
                         e,
                     )
                     try:
-                        minimal_kwargs = {"api_key": self.api_key}
+                        minimal_kwargs = {"api_key": self.api_key, "max_retries": 0}
                         if self.base_url:
                             minimal_kwargs["base_url"] = self.base_url
                         self._client = OpenAI(**minimal_kwargs)
@@ -344,11 +358,11 @@ class OpenAICompatibleProvider(ModelProvider):
             for msg in sanitized.get("input", []):
                 if isinstance(msg, dict) and "content" in msg:
                     for content_item in msg.get("content", []):
-                        if isinstance(content_item, dict) and "text" in content_item:
-                            # Truncate long text and add ellipsis
-                            text = content_item["text"]
-                            if len(text) > 100:
-                                content_item["text"] = text[:100] + "... [truncated]"
+                        if isinstance(content_item, dict):
+                            if "text" in content_item:
+                                content_item["text"] = "[redacted text]"
+                            if "image_url" in content_item:
+                                content_item["image_url"] = "[redacted image]"
 
         # Remove any API keys that might be in headers/auth
         sanitized.pop("api_key", None)
@@ -389,7 +403,7 @@ class OpenAICompatibleProvider(ModelProvider):
         self,
         model_name: str,
         messages: list,
-        temperature: float,
+        temperature: Optional[float],
         max_output_tokens: Optional[int] = None,
         capabilities: Optional[ModelCapabilities] = None,
         **kwargs,
@@ -402,14 +416,37 @@ class OpenAICompatibleProvider(ModelProvider):
             role = message.get("role", "")
             content = message.get("content", "")
 
-            if role == "system":
-                # For o3-pro, system messages should be handled carefully to avoid policy violations
-                # Instead of prefixing with "System:", we'll include the system content naturally
-                input_messages.append({"role": "user", "content": [{"type": "input_text", "text": content}]})
-            elif role == "user":
-                input_messages.append({"role": "user", "content": [{"type": "input_text", "text": content}]})
-            elif role == "assistant":
-                input_messages.append({"role": "assistant", "content": [{"type": "output_text", "text": content}]})
+            if isinstance(content, str):
+                block_type = "output_text" if role == "assistant" else "input_text"
+                response_content = [{"type": block_type, "text": content}]
+            elif isinstance(content, list):
+                response_content = []
+                for item in content:
+                    if not isinstance(item, dict):
+                        raise ValueError("Responses API content blocks must be objects")
+
+                    item_type = item.get("type")
+                    if item_type in {"text", "input_text", "output_text"}:
+                        text = item.get("text")
+                        if not isinstance(text, str):
+                            raise ValueError("Responses API text blocks require string text")
+                        block_type = "output_text" if role == "assistant" else "input_text"
+                        response_content.append({"type": block_type, "text": text})
+                    elif item_type in {"image_url", "input_image"}:
+                        image_url = item.get("image_url")
+                        if isinstance(image_url, dict):
+                            image_url = image_url.get("url")
+                        if not isinstance(image_url, str):
+                            raise ValueError("Responses API image blocks require an image URL")
+                        response_content.append({"type": "input_image", "image_url": image_url})
+                    else:
+                        raise ValueError(f"Unsupported Responses API content block type: {item_type!r}")
+            else:
+                raise ValueError("Responses API message content must be text or a content-block list")
+
+            if role not in {"system", "developer", "user", "assistant"}:
+                raise ValueError(f"Unsupported Responses API message role: {role!r}")
+            input_messages.append({"role": role, "content": response_content})
 
         # Prepare completion parameters for responses endpoint
         # Based on OpenAI documentation, use nested reasoning object for responses endpoint
@@ -423,18 +460,25 @@ class OpenAICompatibleProvider(ModelProvider):
             "reasoning": {"effort": effort},
         }
 
-        # Only include store parameter for providers that support it.
-        # OpenRouter's /responses endpoint rejects store:true via Zod validation (Issue #348).
-        # This is an endpoint-level limitation, not model-specific, so we omit for all
-        # OpenRouter /responses calls. If OpenRouter later supports store, revisit this logic.
-        if self.get_provider_type() != ProviderType.OPENROUTER:
-            completion_params["store"] = True
+        contains_images = any(
+            block.get("type") == "input_image" for message in input_messages for block in message["content"]
+        )
+
+        provider_type = self.get_provider_type()
+        if provider_type != ProviderType.OPENROUTER:
+            # xAI advises disabling server-side history for image requests because storage can make them fail.
+            completion_params["store"] = not (provider_type == ProviderType.XAI and contains_images)
         else:
             logging.debug(f"Omitting 'store' parameter for OpenRouter provider (model: {model_name})")
 
-        # Add max tokens if specified (using max_completion_tokens for responses endpoint)
+        # Responses API uses max_output_tokens, unlike Chat Completions.
         if max_output_tokens:
-            completion_params["max_completion_tokens"] = max_output_tokens
+            completion_params["max_output_tokens"] = max_output_tokens
+
+        if temperature is not None:
+            response_capabilities = capabilities or self.get_all_model_capabilities().get(model_name)
+            if response_capabilities is None or response_capabilities.supports_temperature:
+                completion_params["temperature"] = temperature
 
         # For responses endpoint, we only add parameters that are explicitly supported
         # Remove unsupported chat completion parameters that may cause API errors
@@ -625,7 +669,7 @@ class OpenAICompatibleProvider(ModelProvider):
             return self._generate_with_responses_endpoint(
                 model_name=resolved_model,
                 messages=messages,
-                temperature=temperature,
+                temperature=effective_temperature,
                 max_output_tokens=max_output_tokens,
                 capabilities=capabilities,
                 **kwargs,
@@ -712,10 +756,23 @@ class OpenAICompatibleProvider(ModelProvider):
         usage = {}
 
         if hasattr(response, "usage") and response.usage:
-            # Safely extract token counts with None handling
-            usage["input_tokens"] = getattr(response.usage, "prompt_tokens", 0) or 0
-            usage["output_tokens"] = getattr(response.usage, "completion_tokens", 0) or 0
-            usage["total_tokens"] = getattr(response.usage, "total_tokens", 0) or 0
+            usage_object = response.usage
+
+            def _token_count(primary: str, fallback: str) -> int:
+                value = getattr(usage_object, primary, None)
+                if not isinstance(value, int):
+                    value = getattr(usage_object, fallback, None)
+                return value if isinstance(value, int) else 0
+
+            usage["input_tokens"] = _token_count("input_tokens", "prompt_tokens")
+            usage["output_tokens"] = _token_count("output_tokens", "completion_tokens")
+            total_tokens = getattr(usage_object, "total_tokens", None)
+            if isinstance(total_tokens, int):
+                usage["total_tokens"] = total_tokens
+            elif hasattr(usage_object, "total_tokens"):
+                usage["total_tokens"] = 0
+            else:
+                usage["total_tokens"] = usage["input_tokens"] + usage["output_tokens"]
 
         return usage
 
