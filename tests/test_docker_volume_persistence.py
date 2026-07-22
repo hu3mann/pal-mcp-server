@@ -4,15 +4,13 @@ Tests for Docker volume persistence functionality
 
 import json
 import os
-import subprocess
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 
 class TestDockerVolumePersistence:
-    """Test Docker volume persistence for configuration and logs"""
+    """Test image-backed catalogs and persistent logs."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -27,46 +25,16 @@ class TestDockerVolumePersistence:
 
         content = self.docker_compose_path.read_text()
 
-        # Check for named volume definition
-        assert "pal-mcp-config:" in content, "pal-mcp-config volume must be defined"
-        assert "driver: local" in content, "Named volume must use local driver"
-
-        # Check for volume mounts in service
         assert "./logs:/app/logs" in content, "Logs volume mount required"
-        assert "pal-mcp-config:/app/conf" in content, "Config volume mount required"
+        assert "pal-mcp-config:/app/conf" not in content, "Config volume must not shadow image model catalogs"
 
-    def test_persistent_volume_creation(self):
-        """Test that persistent volumes are created correctly"""
-        # This test checks that the volume configuration is valid
-        # In a real environment, you might want to test actual volume creation
-        volume_name = "pal-mcp-config"
+    def test_model_catalogs_are_image_backed(self):
+        """Built-in catalogs must ship in the image instead of an empty volume."""
+        dockerfile = (self.project_root / "Dockerfile").read_text()
 
-        # Mock Docker command to check volume exists
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value.returncode = 0
-            mock_run.return_value.stdout = f"{volume_name}\n"
-
-            # Simulate docker volume ls command
-            result = subprocess.run(["docker", "volume", "ls", "--format", "{{.Name}}"], capture_output=True, text=True)
-
-            assert volume_name in result.stdout
-
-    def test_configuration_persistence_between_runs(self):
-        """Test that configuration persists between container runs"""
-        # This is a conceptual test - in practice you'd need a real Docker environment
-        config_data = {"test_key": "test_value", "persistent": True}
-
-        # Simulate writing config to persistent volume
-        with patch("json.dump") as mock_dump:
-            json.dump(config_data, mock_dump)
-
-        # Simulate container restart and config retrieval
-        with patch("json.load") as mock_load:
-            mock_load.return_value = config_data
-            loaded_config = json.load(mock_load)
-
-        assert loaded_config == config_data
-        assert loaded_config["persistent"] is True
+        assert "COPY --chown=paluser:paluser . ." in dockerfile
+        assert (self.project_root / "conf" / "openai_models.json").exists()
+        assert (self.project_root / "conf" / "xai_models.json").exists()
 
     def test_log_persistence_configuration(self):
         """Test that log persistence is properly configured"""
@@ -75,31 +43,6 @@ class TestDockerVolumePersistence:
         if self.docker_compose_path.exists():
             content = self.docker_compose_path.read_text()
             assert log_mount in content, f"Log mount {log_mount} must be configured"
-
-    def test_volume_backup_restore_capability(self):
-        """Test that volumes can be backed up and restored"""
-        # Test backup command structure
-        backup_cmd = [
-            "docker",
-            "run",
-            "--rm",
-            "-v",
-            "pal-mcp-config:/data",
-            "-v",
-            "$(pwd):/backup",
-            "alpine",
-            "tar",
-            "czf",
-            "/backup/config-backup.tar.gz",
-            "-C",
-            "/data",
-            ".",
-        ]
-
-        # Verify command structure is valid
-        assert "pal-mcp-config:/data" in backup_cmd
-        assert "tar" in backup_cmd
-        assert "czf" in backup_cmd
 
     def test_volume_permissions(self):
         """Test that volume permissions are properly set"""

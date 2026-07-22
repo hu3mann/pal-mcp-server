@@ -57,7 +57,6 @@ services:
     # Volumes for persistent data
     volumes:
       - ./logs:/app/logs
-      - pal-mcp-config:/app/conf
       - /etc/localtime:/etc/localtime:ro
     
     # Network configuration
@@ -92,11 +91,6 @@ services:
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
       - /app/tmp:noexec,nosuid,size=50m
-
-# Named volumes
-volumes:
-  pal-mcp-config:
-    driver: local
 
 # Networks
 networks:

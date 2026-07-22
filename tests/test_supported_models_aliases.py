@@ -119,19 +119,19 @@ class TestSupportedModelsAliases:
             assert isinstance(config.aliases, list), f"{model_name} aliases must be a list"
 
         # Test specific aliases
-        assert "grok" in provider.MODEL_CAPABILITIES["grok-4"].aliases
-        assert "grok4" in provider.MODEL_CAPABILITIES["grok-4"].aliases
-        assert "grok-4.1-fast-reasoning" in provider.MODEL_CAPABILITIES["grok-4-1-fast-reasoning"].aliases
+        assert "grok" in provider.MODEL_CAPABILITIES["grok-4.5"].aliases
+        assert "grok4.5" in provider.MODEL_CAPABILITIES["grok-4.5"].aliases
+        assert "grok-build-latest" in provider.MODEL_CAPABILITIES["grok-4.5"].aliases
 
         # Test alias resolution
-        assert provider._resolve_model_name("grok") == "grok-4"
-        assert provider._resolve_model_name("grok4") == "grok-4"
-        assert provider._resolve_model_name("grok-4.1-fast-reasoning") == "grok-4-1-fast-reasoning"
-        assert provider._resolve_model_name("grok-4.1-fast-reasoning-latest") == "grok-4-1-fast-reasoning"
+        assert provider._resolve_model_name("grok") == "grok-4.5"
+        assert provider._resolve_model_name("grok4.5") == "grok-4.5"
+        assert provider._resolve_model_name("grok-4") == "grok-4"
+        assert provider._resolve_model_name("grok-build-latest") == "grok-4.5"
 
         # Test case insensitive resolution
-        assert provider._resolve_model_name("Grok") == "grok-4"
-        assert provider._resolve_model_name("GROK-4.1-FAST-REASONING") == "grok-4-1-fast-reasoning"
+        assert provider._resolve_model_name("Grok") == "grok-4.5"
+        assert provider._resolve_model_name("GROK-BUILD-LATEST") == "grok-4.5"
 
     def test_dial_provider_aliases(self):
         """Test DIAL provider's alias structure."""
@@ -180,10 +180,10 @@ class TestSupportedModelsAliases:
         # Test XAI
         xai_provider = XAIModelProvider("test-key")
         xai_models = xai_provider.list_models(respect_restrictions=False)
-        assert "grok-4" in xai_models
+        assert "grok-4.5" in xai_models
         assert "grok" in xai_models
-        assert "grok-4.1-fast" in xai_models
-        assert "grok-4.1-fast-reasoning" in xai_models
+        assert "grok-4.5-latest" in xai_models
+        assert "grok-build-latest" in xai_models
 
         # Test DIAL
         dial_provider = DIALModelProvider("test-key")

@@ -191,10 +191,11 @@ healthcheck:
 ### Volumes
 
 - **Logs**: `./logs:/app/logs` - Application logs
-- **Config**: `pal-mcp-config:/app/conf` - Configuration persistence
 - **Time sync**: `/etc/localtime:/etc/localtime:ro` - Host timezone sync
 
-**Note:** The `pal-mcp-config` is a named Docker volume that persists configuration data between container restarts. All data placed in `/app/conf` inside the container is preserved thanks to this persistent volume. This applies to both `docker-compose run` and `docker-compose up` commands.
+Built-in `/app/conf` model catalogs are image-backed so rebuilds activate catalog
+updates. To persist custom OpenAI or XAI catalogs, bind-mount individual files and
+set `OPENAI_MODELS_CONFIG_PATH` or `XAI_MODELS_CONFIG_PATH` to those paths.
 
 ### Log Management
 
@@ -292,14 +293,9 @@ Consider integrating with monitoring solutions:
 
 ### Backup
 
-Backup persistent volumes:
-```bash
-# Backup configuration
-docker run --rm -v pal-mcp-config:/data -v $(pwd):/backup alpine tar czf /backup/config-backup.tar.gz -C /data .
-
-# Restore configuration
-docker run --rm -v pal-mcp-config:/data -v $(pwd):/backup alpine tar xzf /backup/config-backup.tar.gz -C /data
-```
+Back up the host `logs/` directory and any explicitly bind-mounted custom catalog
+files. Built-in catalogs are restored by rebuilding the image from the desired
+source revision.
 
 ## Performance Tuning
 
@@ -425,7 +421,7 @@ Configure Claude Desktop to use the containerized server. **Choose one of the co
 - Replace `/absolute/path/to/pal-mcp-server` with the actual path to your project.
 - Always use forward slashes `/` for Docker volumes, even on Windows.
 - Ensure the `.env` file exists and contains your API keys.
-- **Persistent volumes**: Docker Compose options (Options 2) automatically use the `pal-mcp-config` named volume for persistent configuration storage.
+- **Model catalogs**: Docker Compose uses catalogs embedded in the image. Configure explicit file mounts for custom catalogs.
 
 **Environment file requirements:**
 ```env
@@ -483,7 +479,8 @@ docker-compose build --no-cache
 
 ### Data Migration
 
-When upgrading, configuration is preserved in the named volume `pal-mcp-config`.
+When upgrading, built-in catalogs come from the rebuilt image. Back up any custom
+catalog files mounted from the host before changing revisions.
 
 For major version upgrades, check the [CHANGELOG](../CHANGELOG.md) for breaking changes.
 

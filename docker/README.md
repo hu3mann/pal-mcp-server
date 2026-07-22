@@ -120,31 +120,20 @@ process is spawned per session by `docker exec`, not as PID 1.
 
 ## Volumes and Persistent Data
 
-The Docker setup includes persistent volumes to preserve data between container runs:
+The Docker setup persists runtime logs between container runs:
 
 - **`./logs:/app/logs`** - Persistent log storage (local folder mount)
-- **`pal-mcp-config:/app/conf`** - Configuration persistence (named Docker volume)
 - **`/etc/localtime:/etc/localtime:ro`** - Host timezone synchronization (read-only)
 
-### How Persistent Volumes Work
-
-The `pal-mcp` service (used by `pal-docker-compose` and Docker Compose commands) mounts the named volume `pal-mcp-config` persistently. All data placed in `/app/conf` inside the container is preserved between runs thanks to this Docker volume.
-
-In the `docker-compose.yml` file, you will find:
+Built-in model catalogs under `/app/conf` are versioned with the image. Mounting an
+empty named volume at `/app/conf` would hide refreshed catalogs after rebuilds, so
+the default Compose service does not mount that path. For custom catalogs, bind-mount
+individual files and set `OPENAI_MODELS_CONFIG_PATH` or `XAI_MODELS_CONFIG_PATH`.
 
 ```yaml
 volumes:
   - ./logs:/app/logs
-  - pal-mcp-config:/app/conf
   - /etc/localtime:/etc/localtime:ro
-```
-
-and the named volume definition:
-
-```yaml
-volumes:
-  pal-mcp-config:
-    driver: local
 ```
 
 ## Security

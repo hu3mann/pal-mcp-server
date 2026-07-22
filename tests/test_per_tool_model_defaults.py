@@ -98,8 +98,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.EXTENDED_REASONING)
-            # Upstream default: OpenAI prefers gpt-5.1-codex for extended reasoning
-            assert model == "gpt-5.1-codex"
+            assert model == "gpt-5.6-sol"
 
     def test_extended_reasoning_with_gemini_only(self):
         """Test EXTENDED_REASONING prefers pro when only Gemini is available."""
@@ -133,8 +132,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
-            # Upstream default: OpenAI prefers gpt-5.2 for fast response
-            assert model == "gpt-5.2"
+            assert model == "gpt-5.6-luna"
 
     def test_fast_response_with_gemini_only(self):
         """Test FAST_RESPONSE prefers flash when only Gemini is available."""
@@ -167,8 +165,7 @@ class TestModelSelection:
             ModelProviderRegistry.register_provider(ProviderType.OPENAI, OpenAIModelProvider)
 
             model = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
-            # Upstream default: OpenAI prefers gpt-5.2 for balanced
-            assert model == "gpt-5.2"
+            assert model == "gpt-5.6-terra"
 
     def test_no_category_uses_balanced_logic(self):
         """Test that no category specified uses balanced logic."""
@@ -195,7 +192,7 @@ class TestFlexibleModelSelection:
                 "env": {"OPENAI_API_KEY": "test-key"},
                 "provider_type": ProviderType.OPENAI,
                 "category": ToolModelCategory.EXTENDED_REASONING,
-                "expected": "gpt-5.1-codex",  # Upstream default reasoning preference
+                "expected": "gpt-5.6-sol",
             },
             # Case 2: Gemini provider for fast response
             {
@@ -209,7 +206,7 @@ class TestFlexibleModelSelection:
                 "env": {"OPENAI_API_KEY": "test-key"},
                 "provider_type": ProviderType.OPENAI,
                 "category": ToolModelCategory.FAST_RESPONSE,
-                "expected": "gpt-5.2",  # Upstream default fast response preference
+                "expected": "gpt-5.6-luna",
             },
         ]
 
@@ -248,7 +245,7 @@ class TestDynamicModelSelectionFlagOn:
             ModelProviderRegistry.unregister_provider(provider_type)
 
     def test_openai_selection_prefers_newest_flagships_under_flag(self):
-        """With the flag on, OpenAI prefers gpt-5.5 (reasoning/balanced) and gpt-5.4-mini (fast)."""
+        """Dynamic routing prefers GPT-5.6 Sol/Terra/Luna by task category."""
         ModelProviderRegistry.clear_cache()
         for provider_type in list(ProviderType):
             ModelProviderRegistry.unregister_provider(provider_type)
@@ -266,9 +263,9 @@ class TestDynamicModelSelectionFlagOn:
             fast = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.FAST_RESPONSE)
             balanced = ModelProviderRegistry.get_preferred_fallback_model(ToolModelCategory.BALANCED)
 
-            assert extended == "gpt-5.5"
-            assert fast == "gpt-5.4-mini"
-            assert balanced == "gpt-5.5"
+            assert extended == "gpt-5.6-sol"
+            assert fast == "gpt-5.6-luna"
+            assert balanced == "gpt-5.6-terra"
 
 
 class TestCustomProviderFallback:

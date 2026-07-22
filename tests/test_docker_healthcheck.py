@@ -105,7 +105,7 @@ class TestDockerHealthCheck:
 
             # Check for health check configuration
             assert "healthcheck:" in content, "Health check must be configured"
-            assert "healthcheck.py" in content, "Health check script must be referenced"
+            assert "import mcp, openai" in content, "Health check must verify runtime imports"
             assert "interval:" in content, "Health check interval must be set"
             assert "timeout:" in content, "Health check timeout must be set"
 
